@@ -21,10 +21,16 @@ async function processInvoice() {
     const { ExpenseDocuments } = response;
     const [expense] = ExpenseDocuments;
     const { SummaryFields } = expense;
-    const table = getTableItems(ExpenseDocuments);
+
+    const table = formatResult(getTableItems(ExpenseDocuments));
     const summary = getSummaryInfo(SummaryFields);
-    console.log(summary, table);
-    return response;
+
+    const result = {
+      table,
+      ...summary,
+    };
+
+    return result;
   } catch (err) {
     console.log("Error", err);
   }
@@ -51,18 +57,38 @@ function getSummaryInfo(SummaryFields) {
 }
 
 function getTableItems(ExpenseDocuments) {
-  let table = [];
+  let result = {};
   ExpenseDocuments.forEach((doc) => {
     doc.LineItemGroups.forEach((items) => {
       items.LineItems.forEach((fields) => {
         fields.LineItemExpenseFields.forEach((expenseFields) => {
-          if (expenseFields?.Type?.Text === "EXPENSE_ROW")
-            table.push(expenseFields.ValueDetection.Text);
+          let key = expenseFields?.Type?.Text;
+          let value = expenseFields?.ValueDetection?.Text;
+
+          if (key !== "OTHER" && key !== "EXPENSE_ROW") {
+            if (!(key in result)) {
+              result[key] = [];
+            }
+            result[key].push(value);
+          }
         });
       });
     });
   });
 
+  return result;
+}
+
+function formatResult(result) {
+  const table = [];
+  const obj = {};
+
+  for (let i = 0; i < Object.keys(result)[0].length; i++) {
+    for (const [key, value] of Object.entries(result)) {
+      obj[key] = value[i];
+    }
+    table.push(obj);
+  }
   return table;
 }
 
