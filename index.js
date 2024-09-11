@@ -81,9 +81,10 @@ function getTableItems(ExpenseDocuments) {
 
 function formatResult(result) {
   const table = [];
-  const obj = {};
+  let obj = {};
 
   for (let i = 0; i < Object.keys(result)[0].length; i++) {
+    obj = {};
     for (const [key, value] of Object.entries(result)) {
       obj[key] = value[i];
     }
